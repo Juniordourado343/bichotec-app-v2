@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BichoTec - Tecnologia que entende animais</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1a1a1a; color: #fff; }
+    header { background: #0d0d0d; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #8DC63F; position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 10px; }
+    .logo { font-size: 24px; font-weight: bold; color: #8DC63F; }
+    .search-bar { flex: 1; min-width: 200px; }
+    .search-bar input { width: 100%; padding: 10px 15px; border: 1px solid #8DC63F; background: #2a2a2a; color: #fff; border-radius: 5px; font-size: 14px; }
+    .btn-novo { background: #8DC63F; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    .btn-novo:hover { background: #7ab52f; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    .feed { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    .card { background: #2a2a2a; border-radius: 10px; border: 1px solid #8DC63F; display: flex; flex-direction: column; }
+    .card-image { width: 100%; height: 200px; object-fit: cover; background: #1a1a1a; display: flex; align-items: center; justify-content: center; font-size: 60px; }
+    .card-image img { width: 100%; height: 100%; object-fit: cover; }
+    .card-content { padding: 15px; flex: 1; display: flex; flex-direction: column; }
+    .card-title { font-size: 18px; font-weight: bold; color: #8DC63F; margin-bottom: 5px; }
+    .card-badge { display: inline-block; background: #8DC63F; color: #000; padding: 5px 10px; border-radius: 3px; font-size: 12px; font-weight: bold; margin-bottom: 10px; width: fit-content; }
+    .card-badge.reunido { background: #4CAF50; }
+    .card-info { font-size: 13px; color: #aaa; margin-bottom: 8px; line-height: 1.5; }
+    .card-actions { display: flex; gap: 8px; margin-top: auto; flex-wrap: wrap; }
+    .btn { flex: 1; padding: 10px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: bold; min-width: 70px; }
+    .btn-contato { background: #8DC63F; color: #000; }
+    .btn-contato:hover { background: #7ab52f; }
+    .btn-editar { background: #2196F3; color: #fff; }
+    .btn-editar:hover { background: #0b7dda; }
+    .btn-reunido { background: #4CAF50; color: #fff; }
+    .btn-reunido:hover { background: #45a049; }
+    .btn-deletar { background: #f44336; color: #fff; }
+    .btn-deletar:hover { background: #da190b; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 1000; overflow-y: auto; align-items: center; justify-content: center; padding: 20px; }
+    .modal.active { display: flex; }
+    .modal-content { background: #2a2a2a; border: 2px solid #8DC63F; border-radius: 10px; padding: 25px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+    .modal-header { font-size: 22px; font-weight: bold; color: #8DC63F; margin-bottom: 20px; display: flex; justify-content: space-between; }
+    .modal-close { background: none; border: none; color: #8DC63F; font-size: 28px; cursor: pointer; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; color: #8DC63F; font-weight: bold; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; background: #1a1a1a; border: 1px solid #8DC63F; color: #fff; border-radius: 5px; font-size: 14px; font-family: inherit; }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .file-input-wrapper input[type=file] { position: absolute; left: -9999px; }
+    .file-input-label { display: block; padding: 12px; background: #1a1a1a; border: 2px dashed #8DC63F; border-radius: 5px; text-align: center; cursor: pointer; color: #8DC63F; font-weight: bold; }
+    .file-input-label:hover { background: #8DC63F; color: #000; }
+    .preview-image { width: 100%; max-height: 200px; object-fit: cover; border-radius: 5px; margin-top: 10px; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .modal-actions button { flex: 1; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    .btn-publicar { background: #8DC63F; color: #000; }
+    .btn-publicar:hover { background: #7ab52f; }
+    .btn-cancelar { background: #555; color: #fff; }
+    .btn-cancelar:hover { background: #666; }
+    .empty-state { text-align: center; padding: 40px 20px; color: #aaa; }
+    @media (max-width: 768px) { .feed { grid-template-columns: 1fr; } .card-actions { flex-direction: column; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">🐾 BichoTec</div>
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Buscar anúncio...">
+    </div>
+    <button class="btn-novo" onclick="openModal()">+ Novo anúncio</button>
+  </header>
+
+  <div class="container">
+    <div id="feed" class="feed"></div>
+    <div id="emptyState" class="empty-state" style="display:none;">
+      <div style="font-size: 48px; margin-bottom: 20px;">🐾</div>
+      <p>Nenhum anúncio encontrado</p>
+    </div>
+  </div>
+
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span id="modalTitle">➕ Novo anúncio</span>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+
+      <form onsubmit="handleSubmit(event)">
+        <div class="form-group">
+          <label>TIPO *</label>
+          <select id="type" required>
+            <option value="">Selecione...</option>
+            <option value="Perdido">Perdido</option>
+            <option value="Encontrado">Encontrado</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>TÍTULO *</label>
+          <input type="text" id="title" required>
+        </div>
+
+        <div class="form-group">
+          <label>ESPÉCIE *</label>
+          <select id="species" required>
+            <option value="">Selecione...</option>
+            <option value="Cachorro">Cachorro</option>
+            <option value="Gato">Gato</option>
+            <option value="Pássaro">Pássaro</option>
+            <option value="Coelho">Coelho</option>
+            <option value="Outro">Outro</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>NOME DO ANIMAL</label>
+          <input type="text" id="animalName" placeholder="Ex: Rex">
+        </div>
+
+        <div class="form-group">
+          <label>RAÇA</label>
+          <input type="text" id="breed">
+        </div>
+
+        <div class="form-group">
+          <label>COR</label>
+          <input type="text" id="color">
+        </div>
+
+        <div class="form-group">
+          <label>DESCRIÇÃO *</label>
+          <textarea id="description" required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>RECOMPENSA</label>
+          <input type="text" id="reward" placeholder="Ex: R$ 500">
+        </div>
+
+        <div class="form-group">
+          <label>ENDEREÇO *</label>
+          <input type="text" id="address" required>
+        </div>
+
+        <div class="form-group">
+          <label>TELEFONE *</label>
+          <input type="tel" id="phone" placeholder="(11) 99999-9999" required>
+        </div>
+
+        <div class="form-group">
+          <label>TUTOR *</label>
+          <input type="text" id="tutorName" required>
+        </div>
+
+        <div class="form-group">
+          <label>FOTO</label>
+          <div class="file-input-wrapper">
+            <input type="file" id="imageInput" accept="image/*" onchange="previewImage()">
+            <label class="file-input-label" for="imageInput">📸 Clique para selecionar imagem</label>
+          </div>
+          <img id="preview" class="preview-image" style="display:none;">
+        </div>
+
+        <div class="modal-actions">
+          <button type="submit" class="btn-publicar">Publicar anúncio</button>
+          <button type="button" class="btn-cancelar" onclick="closeModal()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let animals = [];
+    let editingId = null;
+    let selectedFile = null;
+    const API_BASE = '/api';
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    async function apiRequest(path, options = {}) {
+      const response = await fetch(`${API_BASE}${path}`, options);
+      const contentType = response.headers.get('content-type') || '';
+      const data = contentType.includes('application/json') ? await response.json() : await response.text();
+
+      if (!response.ok) {
+        const message = typeof data === 'object' && data.error ? data.error : 'Erro de comunicação com o servidor';
+        throw new Error(message);
+      }
+
+      return data;
+    }
+
+    function showMessage(message) {
+      const feed = document.getElementById('feed');
+      feed.innerHTML = '';
+      document.getElementById('emptyState').style.display = 'block';
+      document.getElementById('emptyState').innerHTML = `
+        <div style="font-size: 48px; margin-bottom: 20px;">🐾</div>
+        <p>${escapeHtml(message)}</p>
+      `;
+    }
+
+    async function loadAnimals() {
+      try {
+        animals = await apiRequest('/animals');
+        renderFeed();
+      } catch (error) {
+        console.error(error);
+        showMessage('Não foi possível carregar os anúncios. Verifique se o servidor/API está ativo.');
+      }
+    }
+
+    function renderFeed() {
+      const feed = document.getElementById('feed');
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      
+      const filtered = animals.filter(a => 
+        (a.title || '').toLowerCase().includes(search) ||
+        (a.description || '').toLowerCase().includes(search) ||
+        (a.species || '').toLowerCase().includes(search) ||
+        (a.tutorName || '').toLowerCase().includes(search) ||
+        (a.breed && a.breed.toLowerCase().includes(search)) ||
+        (a.color && a.color.toLowerCase().includes(search))
+      );
+
+      if (filtered.length === 0) {
+        feed.innerHTML = '';
+        document.getElementById('emptyState').style.display = 'block';
+        document.getElementById('emptyState').innerHTML = `
+          <div style="font-size: 48px; margin-bottom: 20px;">🐾</div>
+          <p>Nenhum anúncio encontrado</p>
+        `;
+        return;
+      }
+
+      document.getElementById('emptyState').style.display = 'none';
+      feed.innerHTML = filtered.map(a => `
+        <div class="card">
+          <div class="card-image">
+            ${a.imageUrl ? `<img src="${escapeHtml(a.imageUrl)}" alt="${escapeHtml(a.title)}">` : '🐾'}
+          </div>
+          <div class="card-content">
+            <div class="card-badge ${a.isReunited ? 'reunido' : ''}">${a.isReunited ? '✓ REUNIDO' : escapeHtml(a.type)}</div>
+            <div class="card-title">${escapeHtml(a.title)}</div>
+            <div class="card-info">
+              <strong>${escapeHtml(a.species)}</strong> ${a.breed ? `- ${escapeHtml(a.breed)}` : ''}<br>
+              ${a.color ? `Cor: ${escapeHtml(a.color)}<br>` : ''}
+              <strong>${escapeHtml(a.tutorName)}</strong><br>
+              ${escapeHtml(a.address)}
+            </div>
+            <div class="card-actions">
+              <button class="btn btn-contato" data-action="contact" data-id="${escapeHtml(a.id)}">💬 Contato</button>
+              <button class="btn btn-editar" data-action="edit" data-id="${escapeHtml(a.id)}">✏️ Editar</button>
+              <button class="btn btn-reunido" data-action="reunited" data-id="${escapeHtml(a.id)}">${a.isReunited ? '↩️ Desfazer' : '❤️ Reunido'}</button>
+              <button class="btn btn-deletar" data-action="delete" data-id="${escapeHtml(a.id)}">🗑️ Deletar</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openModal() {
+      editingId = null;
+      selectedFile = null;
+      document.getElementById('modalTitle').textContent = '➕ Novo anúncio';
+      document.getElementById('modal').classList.add('active');
+      document.querySelector('form').reset();
+      document.getElementById('imageInput').value = '';
+      document.getElementById('preview').style.display = 'none';
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('active');
+    }
+
+    function previewImage() {
+      const file = document.getElementById('imageInput').files[0];
+      if (file) {
+        selectedFile = file;
+        const reader = new FileReader();
+        reader.onload = e => {
+          document.getElementById('preview').src = e.target.result;
+          document.getElementById('preview').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    async function uploadImageIfNeeded() {
+      if (!selectedFile) return '';
+
+      const formData = new FormData();
+      formData.append('image', selectedFile);
+
+      const uploaded = await apiRequest('/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      return uploaded.url;
+    }
+
+    async function handleSubmit(e) {
+      e.preventDefault();
+
+      const submitButton = e.target.querySelector('button[type="submit"]');
+      submitButton.disabled = true;
+      submitButton.textContent = 'Salvando...';
+
+      try {
+        const currentAnimal = editingId ? animals.find(a => a.id === editingId) : null;
+        const uploadedImageUrl = await uploadImageIfNeeded();
+
+        const payload = {
+          type: document.getElementById('type').value,
+          title: document.getElementById('title').value,
+          animalName: document.getElementById('animalName').value,
+          description: document.getElementById('description').value,
+          species: document.getElementById('species').value,
+          breed: document.getElementById('breed').value,
+          color: document.getElementById('color').value,
+          reward: document.getElementById('reward').value,
+          address: document.getElementById('address').value,
+          phone: document.getElementById('phone').value,
+          tutorName: document.getElementById('tutorName').value,
+          imageUrl: uploadedImageUrl || currentAnimal?.imageUrl || ''
+        };
+
+        if (editingId) {
+          await apiRequest(`/animals/${editingId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        } else {
+          await apiRequest('/animals', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        }
+
+        closeModal();
+        await loadAnimals();
+      } catch (error) {
+        console.error(error);
+        alert(`Erro ao salvar anúncio: ${error.message}`);
+      } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Publicar anúncio';
+      }
+    }
+
+    function editAnimal(id) {
+      const animal = animals.find(a => a.id === id);
+      if (!animal) return;
+
+      editingId = id;
+      selectedFile = null;
+      document.getElementById('modalTitle').textContent = '✏️ Editar anúncio';
+      document.getElementById('type').value = animal.type || '';
+      document.getElementById('title').value = animal.title || '';
+      document.getElementById('animalName').value = animal.animalName || '';
+      document.getElementById('description').value = animal.description || '';
+      document.getElementById('species').value = animal.species || '';
+      document.getElementById('breed').value = animal.breed || '';
+      document.getElementById('color').value = animal.color || '';
+      document.getElementById('reward').value = animal.reward || '';
+      document.getElementById('address').value = animal.address || '';
+      document.getElementById('phone').value = animal.phone || '';
+      document.getElementById('tutorName').value = animal.tutorName || '';
+      document.getElementById('imageInput').value = '';
+
+      if (animal.imageUrl) {
+        document.getElementById('preview').src = animal.imageUrl;
+        document.getElementById('preview').style.display = 'block';
+      } else {
+        document.getElementById('preview').style.display = 'none';
+      }
+
+      document.getElementById('modal').classList.add('active');
+    }
+
+    async function deleteAnimal(id) {
+      if (!confirm('Tem certeza que deseja deletar este anúncio?')) return;
+
+      try {
+        await apiRequest(`/animals/${id}`, { method: 'DELETE' });
+        await loadAnimals();
+      } catch (error) {
+        console.error(error);
+        alert(`Erro ao deletar anúncio: ${error.message}`);
+      }
+    }
+
+    async function toggleReunited(id) {
+      const animal = animals.find(a => a.id === id);
+      if (!animal) return;
+
+      try {
+        await apiRequest(`/animals/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isReunited: !animal.isReunited })
+        });
+        await loadAnimals();
+      } catch (error) {
+        console.error(error);
+        alert(`Erro ao atualizar anúncio: ${error.message}`);
+      }
+    }
+
+    function contactWhatsapp(id) {
+      const animal = animals.find(a => a.id === id);
+      if (!animal) return;
+
+      const cleanPhone = (animal.phone || '').replace(/\D/g, '');
+      const message = `Olá! Vi o anúncio "${animal.title}" no BichoTec. Gostaria de mais informações.`;
+      const url = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(message)}`;
+      window.open(url, '_blank');
+    }
+
+    document.getElementById('feed').addEventListener('click', event => {
+      const button = event.target.closest('button[data-action]');
+      if (!button) return;
+
+      const { action, id } = button.dataset;
+      if (action === 'contact') contactWhatsapp(id);
+      if (action === 'edit') editAnimal(id);
+      if (action === 'reunited') toggleReunited(id);
+      if (action === 'delete') deleteAnimal(id);
+    });
+
+    document.getElementById('searchInput').addEventListener('input', renderFeed);
+    loadAnimals();
+  </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "animals": [
+    {
+      "id": "1717859400000",
+      "type": "Perdido",
+      "title": "Cachorro Perdido - Rolândia",
+      "animalName": "Rex",
+      "description": "Cachorro marrom desaparecido há 3 dias. Muito dócil e amigável. Qualquer informação, favor entrar em contato!",
+      "species": "Cachorro",
+      "breed": "Vira-lata",
+      "color": "Marrom",
+      "reward": "R$ 500",
+      "address": "Rolândia, PR",
+      "phone": "(43) 98413-9767",
+      "tutorName": "Junior",
+      "imageUrl": "https://images.unsplash.com/photo-1633722715463-d30628cce6a9?w=400",
+      "isReunited": false,
+      "createdAt": "2026-06-08T00:00:00.000Z"
+    }
+  ]
+}
